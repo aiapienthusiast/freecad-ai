@@ -219,6 +219,17 @@ you load them — there is nothing to do by hand.
 
 ### Model Parameters
 
+For OpenAI Chat Completions, o-series and GPT-5+ models automatically use
+`max_completion_tokens` and omit `temperature`. Older GPT models retain
+`max_tokens` and their configured temperature. This applies to streaming,
+non-streaming, and tool-calling requests.
+
+Other OpenAI-compatible providers retain their existing parameters. For a
+custom endpoint or deployment alias that requires the newer token parameter,
+add a `max_completion_tokens` row to the profile's **Model Parameters** table.
+That explicit value takes precedence, and `max_tokens` is omitted so the request
+never contains both token-limit parameters.
+
 The **Model Parameters** table in Settings lets you set arbitrary sampling parameters (temperature, top_p, top_k, etc.) that are sent with each API request. Parameters belong to the profile you are editing, so two profiles never share them — even when they name the same model — and removing a row removes the parameter. Removing *every* row is different: a profile with no parameters of its own falls back to the provider's recommended defaults, which is what you will see the next time you open Settings. The per-model defaults written by earlier versions are still in `config.json` but are no longer read; on upgrade the entry for your current model is copied into your profile once.
 
 Click **Load Defaults** to reset to the provider's recommended values. For most providers the only default is `temperature: 0.3`. Moonshot ships with pre-configured values required by Kimi-K2.5.
