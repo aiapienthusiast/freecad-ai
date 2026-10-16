@@ -31,6 +31,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Newer OpenAI models no longer get `max_tokens` (#131).** Only names
+  starting with `gpt-5` used to switch to `max_completion_tokens` and drop
+  `temperature`. Now o-series models (`o1`, `o3-mini`, `o4-mini`), GPT-5 and
+  later, and fine-tuned `ft:` IDs of those all switch on the OpenAI
+  provider, so OpenAI no longer rejects them. Older GPT models keep
+  `max_tokens` and your temperature, and other OpenAI-compatible providers
+  are unchanged. A
+  `max_completion_tokens` row in Model Parameters now works on any provider:
+  it is sent as the only token limit. Before, it was overwritten on
+  `gpt-5`, or sent alongside `max_tokens` elsewhere. Contributed by @vdtdg.
+
 - **VarSet and spreadsheet edge cases from the #121 review (#126).**
   - A new variable with a compound unit (`"5 kg*mm"`) used to be stored
     as a bare `5.0`, silently dropping the unit. It is now refused with
