@@ -575,11 +575,28 @@ class LLMClient:
         belong in providers.py ``default_params`` and are user-editable
         via the Model Parameters table in Settings.
         """
-        if self.provider_name == "openai" and (self.model or "").lower().startswith("gpt-5"):
-            # Official OpenAI Chat Completions: gpt-5.x rejects max_tokens and non-default temperature.
+        # Scope automatic rewrites to OpenAI itself: compatible providers
+        # may serve the same model name with a different parameter contract.
+        model = (self.model or "").lower()
+        if model.startswith("ft:"):
+            model = model.split(":", 2)[1]
+        gpt = re.match(r"^gpt-(\d+)(?:[.-]|$)", model)
+        reasoning_model = (
+            re.match(r"^o\d+(?:-|$)", model) is not None
+            or (gpt is not None and int(gpt.group(1)) >= 5)
+        )
+        if self.provider_name == "openai" and reasoning_model:
+            # o-series and GPT-5+ use a completion budget (including reasoning
+            # tokens), and do not accept the default sampling temperature.
             body.pop("temperature", None)
             if "max_tokens" in body:
-                body["max_completion_tokens"] = body.pop("max_tokens")
+                limit = body.pop("max_tokens")
+                body.setdefault("max_completion_tokens", limit)
+
+        # An explicit Model Parameters row also works for deployment aliases
+        # and custom endpoints. Never send both names or overwrite that row.
+        if "max_completion_tokens" in body:
+            body.pop("max_tokens", None)
 
     def _send_openai(self, messages: list[dict], system: str, stream: bool = False) -> str:
         body = self._openai_body(messages, system, stream=False)
